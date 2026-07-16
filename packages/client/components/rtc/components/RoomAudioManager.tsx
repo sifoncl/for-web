@@ -34,6 +34,14 @@ export function RoomAudioManager() {
 
   createEffect(() => {
     const tracks = filteredTracks();
+    if (tracks.length) {
+      voice
+        .room()
+        ?.startAudio()
+        .catch((error) => {
+          console.warn("[rtc] Audio playback requires user interaction", error);
+        });
+    }
     for (const track of tracks) {
       (track.publication as RemoteTrackPublication).setSubscribed(true);
     }
@@ -44,6 +52,7 @@ export function RoomAudioManager() {
       <Key each={filteredTracks()} by={(item) => getTrackReferenceId(item)}>
         {(track) => (
           <AudioTrack
+            autoplay
             trackRef={track()}
             volume={
               state.voice.outputVolume *
