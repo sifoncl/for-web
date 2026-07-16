@@ -15,8 +15,12 @@ import { styled } from "styled-system/jsx";
 import { UserContextMenu } from "@revolt/app";
 import { useUser } from "@revolt/markdown/users";
 import { useVoice } from "@revolt/rtc";
+import {
+  volumeGainToPercent,
+  volumePercentToGain,
+} from "@revolt/rtc/volumeCurve";
 import { useState } from "@revolt/state";
-import { Avatar } from "@revolt/ui/components/design";
+import { Avatar, IconButton, Slider } from "@revolt/ui/components/design";
 import { Row } from "@revolt/ui/components/layout";
 import { OverflowingText } from "@revolt/ui/components/utils";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
@@ -171,6 +175,47 @@ export function ParticipantTile(props: TileProps) {
             </Row>
           </OverlayInner>
         </Overlay>
+        <Show
+          when={voice.fullscreen() && isScreenShare() && !user().user?.self}
+        >
+          <FullscreenAudioControls
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <Symbol>volume_up</Symbol>
+            <Slider
+              min={0}
+              max={300}
+              step={1}
+              value={volumeGainToPercent(
+                state.voice.getScreenShareVolume(participant.identity),
+              )}
+              onInput={(event) =>
+                state.voice.setScreenShareVolume(
+                  participant.identity,
+                  volumePercentToGain(event.currentTarget.value),
+                )
+              }
+              labelFormatter={(label) => `${label.toFixed(0)}%`}
+            />
+            <IconButton
+              size="sm"
+              variant="standard"
+              onPress={() =>
+                state.voice.setScreenShareMuted(
+                  participant.identity,
+                  !state.voice.getScreenShareMuted(participant.identity),
+                )
+              }
+            >
+              <Symbol>
+                {state.voice.getScreenShareMuted(participant.identity)
+                  ? "volume_off"
+                  : "volume_up"}
+              </Symbol>
+            </IconButton>
+          </FullscreenAudioControls>
+        </Show>
       </div>
     </Show>
   );
@@ -308,5 +353,26 @@ const OverlayInner = styled("div", {
     _first: {
       flexGrow: 1,
     },
+  },
+});
+
+const FullscreenAudioControls = styled("div", {
+  base: {
+    gridArea: "1/1",
+    zIndex: 2,
+    alignSelf: "end",
+    justifySelf: "center",
+    width: "min(520px, calc(100% - 32px))",
+    margin: "var(--gap-lg)",
+    padding: "var(--gap-sm) var(--gap-md)",
+    display: "grid",
+    gridTemplateColumns: "auto 1fr auto",
+    alignItems: "center",
+    gap: "var(--gap-md)",
+    borderRadius: "var(--borderRadius-lg)",
+    color: "var(--md-sys-color-on-surface)",
+    background:
+      "color-mix(in srgb, var(--md-sys-color-surface) 88%, transparent)",
+    backdropFilter: "blur(12px)",
   },
 });
