@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onCleanup, Show } from "solid-js";
 import {
   TrackReference,
   useEnsureParticipant,
@@ -47,6 +47,18 @@ export function ParticipantTile(props: TileProps) {
     height: number;
     width: number;
   }>({ height: 0, width: 0 });
+  const [showFullscreenControls, setShowFullscreenControls] =
+    createSignal(false);
+  let controlsTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const revealFullscreenControls = () => {
+    if (!voice.fullscreen() || !isScreenShare()) return;
+    setShowFullscreenControls(true);
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(() => setShowFullscreenControls(false), 2000);
+  };
+
+  onCleanup(() => clearTimeout(controlsTimer));
 
   const isMuted = useIsMuted({
     participant,
@@ -102,6 +114,13 @@ export function ParticipantTile(props: TileProps) {
           }) + (isScreenShare() ? " vc_tile group" : " vc_tile")
         }
         onClick={() => voice.toggleFocus(track)}
+        onMouseMove={revealFullscreenControls}
+        onContextMenu={(event) => {
+          if (!voice.fullscreen() || !isScreenShare()) return;
+          event.preventDefault();
+          event.stopPropagation();
+          revealFullscreenControls();
+        }}
         use:floating={{
           // TODO: Conflicts with focusing, maybe only show if clicking name itself
           //   userCard: {
@@ -151,37 +170,40 @@ export function ParticipantTile(props: TileProps) {
             }}
           />
         </Show>
-        <Overlay showOnHover={isScreenShare()}>
-          <OverlayInner>
-            <OverflowingText>{user().username}</OverflowingText>
-            <Row gap="md">
-              {isScreenShare() ? (
-                <Show when={isScreenShareAudioUserMuted()}>
-                  <Symbol
-                    size={18}
-                    color={
-                      isScreenShareAudioUserMuted() === "by-user"
-                        ? "var(--md-sys-color-error)"
-                        : undefined
-                    }
-                  >
-                    no_sound
-                  </Symbol>
-                </Show>
-              ) : (
-                <VoiceStatefulUserIcons
-                  userId={participant.identity}
-                  muted={isMuted()}
-                  camera={isVideo()}
-                />
-              )}
-            </Row>
-          </OverlayInner>
-        </Overlay>
+        <Show when={!voice.fullscreen() || !isScreenShare()}>
+          <Overlay showOnHover={isScreenShare()}>
+            <OverlayInner>
+              <OverflowingText>{user().username}</OverflowingText>
+              <Row gap="md">
+                {isScreenShare() ? (
+                  <Show when={isScreenShareAudioUserMuted()}>
+                    <Symbol
+                      size={18}
+                      color={
+                        isScreenShareAudioUserMuted() === "by-user"
+                          ? "var(--md-sys-color-error)"
+                          : undefined
+                      }
+                    >
+                      no_sound
+                    </Symbol>
+                  </Show>
+                ) : (
+                  <VoiceStatefulUserIcons
+                    userId={participant.identity}
+                    muted={isMuted()}
+                    camera={isVideo()}
+                  />
+                )}
+              </Row>
+            </OverlayInner>
+          </Overlay>
+        </Show>
         <Show
           when={voice.fullscreen() && isScreenShare() && !user().user?.self}
         >
           <FullscreenAudioControls
+            visible={showFullscreenControls()}
             onClick={(event) => event.stopPropagation()}
             onPointerDown={(event) => event.stopPropagation()}
           >
@@ -216,6 +238,13 @@ export function ParticipantTile(props: TileProps) {
                   ? "volume_off"
                   : "volume_up"}
               </Symbol>
+            </IconButton>
+            <IconButton
+              size="sm"
+              variant="standard"
+              onPress={() => voice.toggleFullscreen(false)}
+            >
+              <Symbol>fullscreen_exit</Symbol>
             </IconButton>
           </FullscreenAudioControls>
         </Show>
@@ -369,7 +398,7 @@ const FullscreenAudioControls = styled("div", {
     margin: "var(--gap-lg)",
     padding: "var(--gap-sm) var(--gap-md)",
     display: "grid",
-    gridTemplateColumns: "auto 1fr auto",
+    gridTemplateColumns: "auto 1fr auto auto",
     alignItems: "center",
     gap: "var(--gap-md)",
     borderRadius: "var(--borderRadius-lg)",
@@ -377,5 +406,18 @@ const FullscreenAudioControls = styled("div", {
     background:
       "color-mix(in srgb, var(--md-sys-color-surface) 88%, transparent)",
     backdropFilter: "blur(12px)",
+    opacity: 0,
+    pointerEvents: "none",
+    transform: "translateY(12px)",
+    transition: "opacity 150ms ease, transform 150ms ease",
+  },
+  variants: {
+    visible: {
+      true: {
+        opacity: 1,
+        pointerEvents: "auto",
+        transform: "translateY(0)",
+      },
+    },
   },
 });
