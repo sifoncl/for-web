@@ -78,16 +78,17 @@ export function ScreenSharePickerModal(
               <Item selected={selected}>
                 <Ripple />
                 <Show
-                  when={val.image}
+                  when={val.preview}
                   fallback={
                     <Avatar
+                      src={val.image}
                       fallback={val.name}
                       size={96}
                       shape="rounded-square"
                     />
                   }
                 >
-                  <Preview src={val.image} alt="" />
+                  <Preview src={val.preview} alt="" />
                 </Show>
                 <span>{val.name}</span>
               </Item>

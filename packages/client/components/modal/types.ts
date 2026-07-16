@@ -346,6 +346,7 @@ export type Modals =
         name: string;
         isFullScreen: boolean;
         image?: string;
+        preview?: string;
       }[];
       onCancel: () => void;
     };
