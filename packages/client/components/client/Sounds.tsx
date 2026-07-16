@@ -26,6 +26,10 @@ export class SoundController {
 
   lastPlayedSound?: keyof TypeSounds;
 
+  private audioContext?: AudioContext;
+
+  private readonly fallbackAssetSize = 3740;
+
   constructor(soundState: Sounds) {
     this.soundState = soundState;
 
@@ -40,7 +44,7 @@ export class SoundController {
    * @returns Whether a sound is currently playing
    */
   isPlaying(): boolean {
-    return this.node?.paused ?? false;
+    return this.node ? !this.node.paused : false;
   }
 
   /**
@@ -76,67 +80,123 @@ export class SoundController {
     if (!force && !this.canPlay(sound)) {
       return false;
     }
+    let source: string;
     switch (sound) {
       case "deafen": {
-        this.node = new Audio(deafenSound);
+        source = deafenSound;
         break;
       }
       case "message": {
-        this.node = new Audio(messageSound);
+        source = messageSound;
         break;
       }
       case "mute": {
-        this.node = new Audio(muteSound);
+        source = muteSound;
         break;
       }
       case "ringtoneIncoming": {
-        this.node = new Audio(ringtoneIncomingSound);
+        source = ringtoneIncomingSound;
         break;
       }
       case "ringtoneOutgoing": {
-        this.node = new Audio(ringtoneOutgoingSound);
+        source = ringtoneOutgoingSound;
         break;
       }
       case "streamEnd": {
-        this.node = new Audio(streamEndSound);
+        source = streamEndSound;
         break;
       }
       case "streamStart": {
-        this.node = new Audio(streamStartSound);
+        source = streamStartSound;
         break;
       }
       case "streamViewerJoin": {
-        this.node = new Audio(streamViewerJoinSound);
+        source = streamViewerJoinSound;
         break;
       }
       case "streamViewerLeave": {
-        this.node = new Audio(streamViewerLeaveSound);
+        source = streamViewerLeaveSound;
         break;
       }
       case "undeafen": {
-        this.node = new Audio(undeafenSound);
+        source = undeafenSound;
         break;
       }
       case "unmute": {
-        this.node = new Audio(unmuteSound);
+        source = unmuteSound;
         break;
       }
       case "userJoinVoice": {
-        this.node = new Audio(userJoinVoiceSound);
+        source = userJoinVoiceSound;
         break;
       }
       case "userLeaveVoice": {
-        this.node = new Audio(userLeaveVoiceSound);
+        source = userLeaveVoiceSound;
         break;
       }
       case "userMoved": {
-        this.node = new Audio(userMovedSound);
+        source = userMovedSound;
         break;
       }
     }
     this.lastPlayedSound = sound;
-    this.node.play();
+    void this.playSource(sound, source);
     return true;
+  }
+
+  /** Play official audio when available, or a procedural tone for fallback placeholders. */
+  private async playSource(sound: keyof TypeSounds, source: string) {
+    try {
+      const response = await fetch(source);
+      const audio = await response.arrayBuffer();
+      if (audio.byteLength === this.fallbackAssetSize) {
+        await this.playFallbackTone(sound);
+        return;
+      }
+
+      this.node = new Audio(source);
+      await this.node.play();
+    } catch (error) {
+      console.warn(`[sounds] Failed to play ${sound}`, error);
+    }
+  }
+
+  /** Generate a compact notification sound without depending on private brand assets. */
+  private async playFallbackTone(sound: keyof TypeSounds) {
+    this.audioContext ??= new AudioContext();
+    await this.audioContext.resume();
+
+    const context = this.audioContext;
+    const rising = [
+      "userJoinVoice",
+      "streamStart",
+      "streamViewerJoin",
+      "unmute",
+      "undeafen",
+    ].includes(sound);
+    const falling = [
+      "userLeaveVoice",
+      "streamEnd",
+      "streamViewerLeave",
+      "mute",
+      "deafen",
+    ].includes(sound);
+    const frequencies = rising ? [440, 660] : falling ? [660, 440] : [520, 520];
+
+    frequencies.forEach((frequency, index) => {
+      const start = context.currentTime + index * 0.11;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.1);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.11);
+    });
   }
 }
 
