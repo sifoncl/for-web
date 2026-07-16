@@ -1,5 +1,11 @@
 import { State } from "..";
 
+import {
+  LegacyScreenShareQualityName,
+  migrateScreenShareQuality,
+  ScreenShareFrameRate,
+  ScreenShareResolutionId,
+} from "@revolt/rtc/screenShareProfiles";
 import { AbstractStore } from ".";
 
 /**
@@ -37,6 +43,8 @@ export interface TypeVoice {
   autoGainControl: boolean;
 
   screenShareQuality: ScreenShareQualityName;
+  screenShareResolution: ScreenShareResolutionId;
+  screenShareFrameRate: ScreenShareFrameRate;
   screenShareQualityAsk: boolean;
   screenShareAudio: boolean;
 
@@ -80,6 +88,8 @@ export class Voice extends AbstractStore<"voice", TypeVoice> {
       noiseSupression: "browser",
       autoGainControl: true,
       screenShareQuality: "low",
+      screenShareResolution: "720p",
+      screenShareFrameRate: 30,
       screenShareQualityAsk: true,
       screenShareAudio: true,
       inputVolume: 1.0,
@@ -137,6 +147,20 @@ export class Voice extends AbstractStore<"voice", TypeVoice> {
     ) {
       data.screenShareQuality = input.screenShareQuality;
     }
+
+    const migrated = migrateScreenShareQuality(
+      input.screenShareQuality as LegacyScreenShareQualityName | undefined,
+    );
+    data.screenShareResolution = ["720p", "1080p", "4k", "source"].includes(
+      input.screenShareResolution as string,
+    )
+      ? (input.screenShareResolution as ScreenShareResolutionId)
+      : migrated.resolutionId;
+    data.screenShareFrameRate = [5, 30, 60].includes(
+      input.screenShareFrameRate as number,
+    )
+      ? (input.screenShareFrameRate as ScreenShareFrameRate)
+      : migrated.frameRate;
 
     if (typeof input.screenShareQualityAsk === "boolean") {
       data.screenShareQualityAsk = input.screenShareQualityAsk;
@@ -320,6 +344,14 @@ export class Voice extends AbstractStore<"voice", TypeVoice> {
     this.set("screenShareQuality", value);
   }
 
+  set screenShareResolution(value: ScreenShareResolutionId) {
+    this.set("screenShareResolution", value);
+  }
+
+  set screenShareFrameRate(value: ScreenShareFrameRate) {
+    this.set("screenShareFrameRate", value);
+  }
+
   /**
    * Set screen share quality always ask
    */
@@ -409,6 +441,14 @@ export class Voice extends AbstractStore<"voice", TypeVoice> {
    */
   get screenShareQuality(): ScreenShareQualityName | undefined {
     return this.get().screenShareQuality;
+  }
+
+  get screenShareResolution(): ScreenShareResolutionId {
+    return this.get().screenShareResolution;
+  }
+
+  get screenShareFrameRate(): ScreenShareFrameRate {
+    return this.get().screenShareFrameRate;
   }
 
   /**
