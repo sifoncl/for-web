@@ -20,7 +20,6 @@ export function RoomAudioManager() {
       Track.Source.Unknown,
     ],
     {
-      updateOnlyOn: [],
       onlySubscribed: false,
     },
   );
@@ -35,10 +34,8 @@ export function RoomAudioManager() {
 
   createEffect(() => {
     const tracks = filteredTracks();
-    console.info("[rtc] filtered tracks", filteredTracks());
     for (const track of tracks) {
       (track.publication as RemoteTrackPublication).setSubscribed(true);
-      console.info(track.publication);
     }
   });
 
