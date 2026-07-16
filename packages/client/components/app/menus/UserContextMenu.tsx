@@ -6,6 +6,10 @@ import type { Channel, Message, ServerMember, User } from "stoat.js";
 import { useClient } from "@revolt/client";
 import { useModals } from "@revolt/modal";
 import { useSmartParams } from "@revolt/routing";
+import {
+  volumeGainToPercent,
+  volumePercentToGain,
+} from "@revolt/rtc/volumeCurve";
 import { useState } from "@revolt/state";
 import { Slider, Text } from "@revolt/ui";
 
@@ -311,16 +315,18 @@ export function UserContextMenu(props: {
           </Text>
           <Slider
             min={0}
-            max={3}
-            step={0.1}
-            value={state.voice.getUserVolume(props.user.id)}
+            max={300}
+            step={1}
+            value={volumeGainToPercent(
+              state.voice.getUserVolume(props.user.id),
+            )}
             onInput={(event) =>
               state.voice.setUserVolume(
                 props.user.id,
-                event.currentTarget.value,
+                volumePercentToGain(event.currentTarget.value),
               )
             }
-            labelFormatter={(label) => (label * 100).toFixed(0) + "%"}
+            labelFormatter={(label) => `${label.toFixed(0)}%`}
           />
         </ContextMenuButton>
         <ContextMenuButton
@@ -349,16 +355,18 @@ export function UserContextMenu(props: {
           </Text>
           <Slider
             min={0}
-            max={3}
-            step={0.1}
-            value={state.voice.getScreenShareVolume(props.user.id)}
+            max={300}
+            step={1}
+            value={volumeGainToPercent(
+              state.voice.getScreenShareVolume(props.user.id),
+            )}
             onInput={(event) =>
               state.voice.setScreenShareVolume(
                 props.user.id,
-                event.currentTarget.value,
+                volumePercentToGain(event.currentTarget.value),
               )
             }
-            labelFormatter={(label) => (label * 100).toFixed(0) + "%"}
+            labelFormatter={(label) => `${label.toFixed(0)}%`}
           />
         </ContextMenuButton>
         <ContextMenuButton
