@@ -8,7 +8,7 @@ import {
 import { useState } from "@revolt/state";
 import { Avatar, Column, Dialog, DialogProps, Form2, Ripple } from "@revolt/ui";
 
-import { createMemo } from "solid-js";
+import { createMemo, Show } from "solid-js";
 import { styled } from "styled-system/jsx";
 import { Modals } from "../types";
 
@@ -72,17 +72,23 @@ export function ScreenSharePickerModal(
             items={sources()}
             selectHeight="max(30vh, 200px)"
             isMaxHeight={true}
-            itemHeight={60}
+            itemHeight={110}
           >
             {(val, selected) => (
               <Item selected={selected}>
                 <Ripple />
-                <Avatar
-                  src={val.image}
-                  fallback={val.name}
-                  size={36}
-                  shape="rounded-square"
-                />
+                <Show
+                  when={val.image}
+                  fallback={
+                    <Avatar
+                      fallback={val.name}
+                      size={96}
+                      shape="rounded-square"
+                    />
+                  }
+                >
+                  <Preview src={val.image} alt="" />
+                </Show>
                 <span>{val.name}</span>
               </Item>
             )}
@@ -120,7 +126,7 @@ export function ScreenSharePickerModal(
 
 const Item = styled("div", {
   base: {
-    height: "60px",
+    height: "110px",
     display: "flex",
     position: "relative",
     alignItems: "center",
@@ -135,5 +141,16 @@ const Item = styled("div", {
         background: "var(--md-sys-color-primary)",
       },
     },
+  },
+});
+
+const Preview = styled("img", {
+  base: {
+    width: "160px",
+    height: "90px",
+    flexShrink: 0,
+    objectFit: "contain",
+    background: "black",
+    borderRadius: "var(--borderRadius-sm)",
   },
 });
