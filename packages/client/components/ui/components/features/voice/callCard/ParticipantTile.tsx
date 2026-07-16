@@ -232,6 +232,17 @@ export const tile = cva({
         aspectRatio: "auto",
       },
     },
+    {
+      fullscreen: [true],
+      focus: [true],
+      css: {
+        width: "100%",
+        height: "100%",
+        maxWidth: "none",
+        borderRadius: 0,
+        outline: "none",
+      },
+    },
   ],
 });
 

@@ -249,7 +249,7 @@ function VoiceCallCard(props: { channel: Channel }) {
   return (
     <Show when={voice.showCard(props.channel)}>
       <Base>
-        <Card ref={viewRef} active={inCall()}>
+        <Card ref={viewRef} active={inCall()} fullscreen={voice.fullscreen()}>
           <Show
             when={inCall()}
             fallback={<VoiceCallCardPreview channel={props.channel} />}
@@ -301,6 +301,15 @@ const Card = styled("div", {
         width: "360px",
         height: "120px",
         cursor: "pointer",
+      },
+    },
+    fullscreen: {
+      true: {
+        width: "100vw",
+        height: "100vh",
+        maxWidth: "none",
+        borderRadius: 0,
+        background: "black",
       },
     },
   },

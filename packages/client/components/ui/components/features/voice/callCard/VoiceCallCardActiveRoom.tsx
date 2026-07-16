@@ -17,8 +17,9 @@ import { VoiceCallCardStatus } from "./VoiceCallCardStatus";
  * Call card (active)
  */
 export function VoiceCallCardActiveRoom() {
+  const voice = useVoice();
   return (
-    <View>
+    <View fullscreen={voice.fullscreen()}>
       <Participants />
       <VoiceCallControls>
         <VoiceCallControlHolder right>
@@ -162,6 +163,15 @@ const View = styled("div", {
     flexDirection: "column",
     gap: "var(--gap-md)",
     padding: "var(--gap-md)",
+  },
+  variants: {
+    fullscreen: {
+      true: {
+        gap: 0,
+        padding: 0,
+        background: "black",
+      },
+    },
   },
 });
 
