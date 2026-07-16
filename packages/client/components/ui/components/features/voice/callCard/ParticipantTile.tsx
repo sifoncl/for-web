@@ -90,6 +90,9 @@ export function ParticipantTile(props: TileProps) {
   return (
     <Show when={!isScreenShare() || !isRemoteScreenShareMuted()}>
       <div
+        data-fullscreen-target={
+          props.focus && isScreenShare() ? "stream" : undefined
+        }
         class={
           tile({
             speaking: !isScreenShare() && isSpeaking(),

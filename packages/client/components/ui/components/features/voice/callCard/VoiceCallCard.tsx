@@ -226,7 +226,7 @@ function VoiceCallCard(props: { channel: Channel }) {
   let viewRef: HTMLDivElement | undefined;
 
   onMount(() => {
-    viewRef?.addEventListener("fullscreenchange", () => {
+    document.addEventListener("fullscreenchange", () => {
       if (!document.fullscreenElement) {
         voice.toggleFullscreen(false);
       }
@@ -235,11 +235,14 @@ function VoiceCallCard(props: { channel: Channel }) {
 
   createEffect(() => {
     if (voice.fullscreen() && inCall()) {
-      if (!viewRef?.isSameNode(document.fullscreenElement)) {
+      const target =
+        viewRef?.querySelector<HTMLElement>("[data-fullscreen-target]") ??
+        viewRef;
+      if (!target?.isSameNode(document.fullscreenElement)) {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
-        viewRef?.requestFullscreen();
+        target?.requestFullscreen();
       }
     } else if (document.fullscreenElement) {
       document.exitFullscreen();
